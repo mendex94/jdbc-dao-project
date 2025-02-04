@@ -44,5 +44,10 @@ public class Program {
 				updatedSeller.setBaseSalary(9500.0);
 
 				sellerDao.update(updatedSeller);
+				System.out.println("Updated successfully!");
+
+				System.out.println("=================");
+				sellerDao.deleteById(10);
+				System.out.println("Seller deleted successfully!");
 		}
 }
