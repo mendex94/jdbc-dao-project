@@ -6,10 +6,7 @@ import model.dao.SellerDao;
 import model.entities.Department;
 import model.entities.Seller;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,7 +21,42 @@ public class SellerDaoJDBC implements SellerDao {
 
 		@Override
 		public void insert(Seller seller) {
+			PreparedStatement preparedStatement = null;
+			try {
+					preparedStatement = connection.prepareStatement(
+									"INSERT INTO seller "
+									+ "(Name, Email, BirthDate, BaseSalary, DepartmentId) "
+									+ "VALUES "
+									+ "(?, ?, ?, ?, ?)",
+									Statement.RETURN_GENERATED_KEYS
+					);
 
+					preparedStatement.setString(1, seller.getName());
+					preparedStatement.setString(2, seller.getEmail());
+					preparedStatement.setDate(3, new Date(seller.getBirthDate().getTime()));
+					preparedStatement.setDouble(4, seller.getBaseSalary());
+					preparedStatement.setInt(5, seller.getDepartment().getId());
+
+					int rowsAffected = preparedStatement.executeUpdate();
+
+					if (rowsAffected > 0) {
+							ResultSet resultSet = preparedStatement.getGeneratedKeys();
+
+							if (resultSet.next()) {
+									int id = resultSet.getInt(1);
+
+									seller.setId(id);
+							}
+
+							DB.closeResultSet(resultSet);
+					} else {
+							throw new DbException("Unexpected Error, No rows affected.");
+					}
+			} catch (SQLException e) {
+					throw new DbException(e.getMessage());
+			} finally {
+					DB.closeStatement(preparedStatement);
+			}
 		}
 
 		@Override
@@ -85,7 +117,43 @@ public class SellerDaoJDBC implements SellerDao {
 
 		@Override
 		public List<Seller> findAll() {
-				return List.of();
+				PreparedStatement statement = null;
+				ResultSet resultSet = null;
+
+				try {
+						statement = connection.prepareStatement(
+										"SELECT seller.*,department.Name as DepName "
+														+ "FROM seller INNER JOIN department "
+														+ "ON seller.DepartmentId = department.Id "
+														+ "ORDER BY Name"
+						);
+
+
+						resultSet = statement.executeQuery();
+
+						List<Seller> sellers = new ArrayList<>();
+						Map<Integer, Department> departmentMap = new HashMap<>();
+
+						while (resultSet.next()) {
+								Department departmentFromDb = departmentMap.get(resultSet.getInt("DepartmentId"));
+
+								if (departmentFromDb == null) {
+										departmentFromDb = instantiateDepartment(resultSet);
+										departmentMap.put(resultSet.getInt("DepartmentId"), departmentFromDb);
+								}
+
+								Seller seller = instantiateSeller(resultSet, departmentFromDb);
+
+								sellers.add(seller);
+						}
+
+						return sellers;
+				} catch (SQLException e) {
+						throw new DbException(e.getMessage());
+				} finally {
+						DB.closeStatement(statement);
+						DB.closeResultSet(resultSet);
+				}
 		}
 
 		@Override

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DdlMappings">
+    <mapping uuid="ed13a00e-3b52-4950-931d-8e7242057a3c" name="coursejdbc@localhost Mapping">
+      <data-sources db="b140c18e-9eef-4d75-b9a4-1489687623f2" ddl="e61c3b1a-7baf-4d2a-b6f7-7c33caa187b9" />
+      <scope>
+        <node kind="database" qname="@" />
+      </scope>
+    </mapping>
+  </component>
+</project>
